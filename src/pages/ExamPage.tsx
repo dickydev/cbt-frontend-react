@@ -18,10 +18,12 @@ export default function ExamPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const { violations, enterFullscreen } = useExamGuard({ sessionToken: token });
-  const countdown = useCountdown(
-    examData?.expires_at || new Date().toISOString(),
-  );
+  const { violations, enterFullscreen } = useExamGuard({
+    sessionToken: token,
+    initialViolations: examData?.violation_count ?? 0,
+  });
+
+  const countdown = useCountdown(examData?.expires_at);
 
   const fetchSession = async () => {
     try {
@@ -119,6 +121,9 @@ export default function ExamPage() {
   console.log("expires_at", examData?.expires_at);
   console.log("remaining", countdown.remainingMs);
   console.log("isExpired", countdown.isExpired);
+
+  console.log("backend violation", examData?.violation_count);
+  console.log("frontend violation", violations);
   return (
     <div className="exam-page">
       <ExamHeader

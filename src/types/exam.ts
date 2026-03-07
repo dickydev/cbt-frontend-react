@@ -29,6 +29,9 @@ export interface SessionExamResponse {
   started_at: string;
   expires_at: string;
   duration_minutes: number;
+
+  violation_count: number; // tambahkan ini
+
   exam: ExamInfo;
   questions: ExamQuestion[];
 }

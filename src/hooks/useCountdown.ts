@@ -1,35 +1,40 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-export function useCountdown(expiresAt: string) {
-  const expiry = new Date(expiresAt).getTime();
-
-  const calc = () => {
-    const now = Date.now();
-    const diff = expiry - now;
-    return diff > 0 ? diff : 0;
-  };
-
-  const [remainingMs, setRemainingMs] = useState(calc());
+export function useCountdown(expiresAt?: string) {
+  const [remainingMs, setRemainingMs] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRemainingMs(calc());
-    }, 1000);
+    if (!expiresAt) return;
+
+    const expiry = new Date(expiresAt).getTime();
+
+    const update = () => {
+      const now = Date.now();
+      const diff = expiry - now;
+
+      setRemainingMs(diff > 0 ? diff : 0);
+    };
+
+    update(); // hitung langsung saat load
+
+    const interval = setInterval(update, 1000);
 
     return () => clearInterval(interval);
   }, [expiresAt]);
 
-  const formatted = useMemo(() => {
-    const totalSeconds = Math.floor(remainingMs / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
+  const totalSeconds = Math.floor(remainingMs / 1000);
 
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-  }, [remainingMs]);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const formatted = `${String(hours).padStart(2, "0")}:${String(
+    minutes,
+  ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
   return {
     remainingMs,
     formatted,
-    isExpired: remainingMs === 0,
+    isExpired: remainingMs <= 0,
   };
 }

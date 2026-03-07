@@ -3,10 +3,20 @@ import client from "../api/client";
 
 interface UseExamGuardProps {
   sessionToken: string;
+  initialViolations: number;
 }
 
-export function useExamGuard({ sessionToken }: UseExamGuardProps) {
-  const [violations, setViolations] = useState(0);
+export function useExamGuard({
+  sessionToken,
+  initialViolations,
+}: UseExamGuardProps) {
+  const [violations, setViolations] = useState(initialViolations ?? 0);
+
+  // sync dari backend ketika examData berubah
+  useEffect(() => {
+    setViolations(initialViolations ?? 0);
+  }, [initialViolations]);
+
   const sentRef = useRef<number>(0);
 
   const sendActivity = async (
