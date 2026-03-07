@@ -1,31 +1,35 @@
 import { useEffect, useMemo, useState } from "react";
 
 export function useCountdown(expiresAt: string) {
-  const calc = () => Math.max(0, new Date(expiresAt).getTime() - Date.now());
+  const expiry = new Date(expiresAt).getTime();
+
+  const calc = () => {
+    const now = Date.now();
+    const diff = expiry - now;
+    return diff > 0 ? diff : 0;
+  };
+
   const [remainingMs, setRemainingMs] = useState(calc());
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
+    const interval = setInterval(() => {
       setRemainingMs(calc());
     }, 1000);
 
-    return () => window.clearInterval(interval);
+    return () => clearInterval(interval);
   }, [expiresAt]);
 
   const formatted = useMemo(() => {
     const totalSeconds = Math.floor(remainingMs / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
 
-    return [hours, minutes, seconds]
-      .map((v) => String(v).padStart(2, "0"))
-      .join(":");
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }, [remainingMs]);
 
   return {
     remainingMs,
     formatted,
-    isExpired: remainingMs <= 0,
+    isExpired: remainingMs === 0,
   };
 }

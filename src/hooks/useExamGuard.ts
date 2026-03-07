@@ -39,10 +39,20 @@ export function useExamGuard({ sessionToken }: UseExamGuardProps) {
       void sendActivity("blur", { at: new Date().toISOString() });
     };
 
-    const onFullscreenChange = () => {
+    const onFullscreenChange = async () => {
       if (!document.fullscreenElement) {
         setViolations((v) => v + 1);
-        void sendActivity("fullscreen_exit", { at: new Date().toISOString() });
+
+        await sendActivity("fullscreen_exit", {
+          at: new Date().toISOString(),
+        });
+
+        // paksa masuk fullscreen lagi
+        try {
+          await document.documentElement.requestFullscreen();
+        } catch (err) {
+          console.warn("Tidak bisa masuk fullscreen lagi", err);
+        }
       }
     };
 

@@ -46,10 +46,14 @@ export default function ExamPage() {
   }, []);
 
   useEffect(() => {
-    if (countdown.isExpired && examData && !submitting) {
-      void handleSubmit();
-    }
-  }, [countdown.isExpired, examData]);
+    if (!examData) return;
+    if (!countdown.isExpired) return;
+    if (submitting) return;
+
+    console.log("Timer expired → auto submit");
+
+    handleSubmit();
+  }, [countdown.isExpired]);
 
   const answeredMap = useMemo(() => {
     const result: Record<string, boolean> = {};
@@ -112,6 +116,9 @@ export default function ExamPage() {
 
   const currentQuestion = examData.questions[currentIndex];
 
+  console.log("expires_at", examData?.expires_at);
+  console.log("remaining", countdown.remainingMs);
+  console.log("isExpired", countdown.isExpired);
   return (
     <div className="exam-page">
       <ExamHeader
