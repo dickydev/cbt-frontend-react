@@ -324,3 +324,38 @@ input {
   text-align: center;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
+
+.admin-layout {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background: #0f172a;
+  color: white;
+  padding: 20px;
+}
+
+.sidebar a {
+  display: block;
+  margin: 10px 0;
+  color: white;
+  text-decoration: none;
+}
+
+.admin-main {
+  flex: 1;
+  background: #f8fafc;
+}
+
+.admin-content {
+  padding: 30px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
