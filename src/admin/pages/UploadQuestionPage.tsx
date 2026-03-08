@@ -1,13 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import client from "../../api/client";
+
+interface ExamPackage {
+  id: string;
+  title: string;
+}
 
 export default function UploadQuestionPage() {
   const [file, setFile] = useState<File | null>(null);
+  const [packages, setPackages] = useState<ExamPackage[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const fetchPackages = async () => {
+    try {
+      const res = await client.get("/packages");
+      setPackages(res.data.data || []);
+    } catch (err) {
+      console.error("Gagal load packages", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPackages();
+  }, []);
 
   const handleUpload = async () => {
     if (!file) {
       alert("Silakan pilih file terlebih dahulu");
+      return;
+    }
+
+    if (!selectedPackage) {
+      alert("Pilih paket ujian terlebih dahulu");
       return;
     }
 
@@ -16,15 +41,13 @@ export default function UploadQuestionPage() {
 
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("exam_package_id", selectedPackage);
 
-      await client.post("/imports/questions", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      await client.post("/imports/questions", formData);
 
       alert("Soal berhasil diupload");
       setFile(null);
+      setSelectedPackage("");
     } catch (error) {
       console.error(error);
       alert("Upload gagal");
@@ -39,7 +62,6 @@ export default function UploadQuestionPage() {
 
       <div className="upload-row">
         {/* Upload Card */}
-
         <div className="upload-card">
           <h3>Import Soal dari Excel</h3>
 
@@ -47,6 +69,21 @@ export default function UploadQuestionPage() {
             Upload file Excel (.xlsx) sesuai template yang telah disediakan.
           </p>
 
+          {/* PILIH PAKET UJIAN */}
+          <select
+            value={selectedPackage}
+            onChange={(e) => setSelectedPackage(e.target.value)}
+          >
+            <option value="">Pilih Paket Ujian</option>
+
+            {packages.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.title}
+              </option>
+            ))}
+          </select>
+
+          {/* FILE INPUT */}
           <input
             type="file"
             accept=".xlsx"
@@ -65,7 +102,6 @@ export default function UploadQuestionPage() {
         </div>
 
         {/* Guide Card */}
-
         <div className="guide-card">
           <h3>Format Excel</h3>
 
@@ -94,8 +130,6 @@ export default function UploadQuestionPage() {
           font-weight:600;
         }
 
-        /* ROW LAYOUT */
-
         .upload-row{
           display:flex;
           gap:20px;
@@ -112,6 +146,12 @@ export default function UploadQuestionPage() {
           display:flex;
           flex-direction:column;
           gap:12px;
+        }
+
+        select{
+          border:1px solid #e5e7eb;
+          padding:10px;
+          border-radius:6px;
         }
 
         input[type=file]{
