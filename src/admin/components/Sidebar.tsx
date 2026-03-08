@@ -1,19 +1,90 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 export default function Sidebar() {
   return (
-    <div className="sidebar">
-      <h2>CBT Admin</h2>
+    <aside className="sidebar">
+      <div className="logo">CBT Admin</div>
 
       <nav>
-        <Link to="/admin">Dashboard</Link>
+        <div className="menu-group">
+          <span className="menu-title">Dashboard</span>
 
-        <Link to="/admin/packages">Paket Ujian</Link>
+          <NavLink to="/admin" end>
+            Dashboard
+          </NavLink>
+        </div>
 
-        <Link to="/admin/upload">Upload Soal</Link>
+        <div className="menu-group">
+          <span className="menu-title">Manajemen Ujian</span>
 
-        <Link to="/admin/sessions">Monitoring Ujian</Link>
+          <NavLink to="/admin/packages">Paket Ujian</NavLink>
+
+          <NavLink to="/admin/upload">Upload Soal</NavLink>
+        </div>
+
+        <div className="menu-group">
+          <span className="menu-title">Monitoring</span>
+
+          <NavLink to="/admin/sessions">Monitoring Ujian</NavLink>
+        </div>
       </nav>
-    </div>
+
+      <style>{`
+
+        .sidebar{
+          width:240px;
+          background:#111827;
+          color:white;
+          padding:24px 18px;
+          display:flex;
+          flex-direction:column;
+          height:100vh;
+        }
+
+        .logo{
+          font-size:20px;
+          font-weight:700;
+          margin-bottom:30px;
+        }
+
+        nav{
+          display:flex;
+          flex-direction:column;
+          gap:20px;
+        }
+
+        .menu-group{
+          display:flex;
+          flex-direction:column;
+          gap:8px;
+        }
+
+        .menu-title{
+          font-size:12px;
+          color:#9ca3af;
+          text-transform:uppercase;
+          margin-bottom:6px;
+        }
+
+        nav a{
+          padding:10px 12px;
+          border-radius:6px;
+          text-decoration:none;
+          color:#d1d5db;
+          font-size:14px;
+        }
+
+        nav a:hover{
+          background:#1f2937;
+        }
+
+        nav a.active{
+          background:#2563eb;
+          color:white;
+          font-weight:500;
+        }
+
+      `}</style>
+    </aside>
   );
 }

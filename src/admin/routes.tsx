@@ -8,11 +8,14 @@ import SessionPage from "./pages/SessionPage";
 export default function AdminRoutes() {
   return (
     <Routes>
-      <Route element={<AdminLayout />}>
-        <Route path="/admin" element={<DashboardPage />} />
-        <Route path="/admin/packages" element={<PackagePage />} />
-        <Route path="/admin/upload" element={<UploadQuestionPage />} />
-        <Route path="/admin/sessions" element={<SessionPage />} />
+      <Route path="/" element={<AdminLayout />}>
+        <Route index element={<DashboardPage />} />
+
+        <Route path="packages" element={<PackagePage />} />
+
+        <Route path="upload" element={<UploadQuestionPage />} />
+
+        <Route path="sessions" element={<SessionPage />} />
       </Route>
     </Routes>
   );
