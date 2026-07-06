@@ -2,7 +2,7 @@ import axios from "axios";
 import { getAdminToken } from "../utils/adminStorage";
 
 const client = axios.create({
-  baseURL: "http://localhost:5500/api",
+  baseURL: "https://cbt-backend-express-production.up.railway.app/api",
 });
 
 client.interceptors.request.use((config) => {

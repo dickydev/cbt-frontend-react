@@ -39,6 +39,8 @@ export default function SessionPage() {
     return <div style={{ padding: 20 }}>Loading monitoring...</div>;
   }
 
+  console.log(sessions)
+
   return (
     <div className="session-page">
       <h1 className="page-title">Monitoring Ujian</h1>

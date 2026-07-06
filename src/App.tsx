@@ -30,6 +30,7 @@ function SessionRecovery() {
     const isOnResultPage = location.pathname.startsWith("/result");
     const isOnAdmin = location.pathname.startsWith("/admin");
 
+    console.log(token);
     // jangan ganggu halaman admin
     if (isOnAdmin) return;
 
