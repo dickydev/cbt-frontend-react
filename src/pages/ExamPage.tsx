@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import client from "../api/client";
 import ExamHeader from "../components/ExamHeader";
@@ -36,7 +36,7 @@ export default function ExamPage() {
 
   const countdown = useCountdown(examData?.expires_at);
 
-  const fetchSession = async () => {
+  const fetchSession = useCallback(async () => {
     try {
       setLoading(true);
       const response = await client.get<ApiResponse<SessionExamResponse>>(
@@ -48,17 +48,17 @@ export default function ExamPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     void fetchSession();
-  }, [token]);
+  }, [fetchSession, token]);
 
   useEffect(() => {
     if (examData) {
       void enterFullscreen();
     }
-  }, [examData]);
+  }, [enterFullscreen, examData]);
 
   useEffect(() => {
     if (violations > 1) {

@@ -1,10 +1,12 @@
 import axios from "axios";
 import { getAdminToken } from "../utils/adminStorage";
 
-const client = axios.create({
-  baseURL: "https://cbt-backend-express-production.up.railway.app/api",
-});
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5500/api";
 
+const client = axios.create({
+  baseURL: API_BASE_URL,
+});
 client.interceptors.request.use((config) => {
   const token = getAdminToken();
 
