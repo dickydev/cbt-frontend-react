@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import client from "../api/client";
 
 interface UseExamGuardProps {
@@ -6,33 +6,44 @@ interface UseExamGuardProps {
   initialViolations: number;
 }
 
+type ActivityMetadata = Record<string, unknown>;
+
+type ExamActivityType =
+  | "hidden"
+  | "blur"
+  | "fullscreen_exit"
+  | "back_navigation";
+
 export function useExamGuard({
   sessionToken,
   initialViolations,
 }: UseExamGuardProps) {
   const [violations, setViolations] = useState(initialViolations ?? 0);
 
+  const sentRef = useRef<number>(0);
+
   // sync dari backend ketika examData berubah
   useEffect(() => {
     setViolations(initialViolations ?? 0);
   }, [initialViolations]);
 
-  const sentRef = useRef<number>(0);
-
-  const sendActivity = async (
-    activityType: string,
-    metadata: Record<string, unknown> = {},
-  ) => {
-    try {
-      await client.post("/exam/activity-log", {
-        session_token: sessionToken,
-        activity_type: activityType,
-        metadata,
-      });
-    } catch (error) {
-      console.error("Gagal kirim activity log", error);
-    }
-  };
+  const sendActivity = useCallback(
+    async (
+      activityType: ExamActivityType,
+      metadata: ActivityMetadata = {},
+    ): Promise<void> => {
+      try {
+        await client.post("/exam/activity-log", {
+          session_token: sessionToken,
+          activity_type: activityType,
+          metadata,
+        });
+      } catch (error: unknown) {
+        console.error("Gagal kirim activity log", error);
+      }
+    },
+    [sessionToken],
+  );
 
   useEffect(() => {
     if (!sessionToken) return;
@@ -41,31 +52,37 @@ export function useExamGuard({
        ACTIVITY DETECTION
     =============================== */
 
-    const onVisibilityChange = () => {
+    const onVisibilityChange = (): void => {
       if (document.hidden) {
         setViolations((v) => v + 1);
-        void sendActivity("hidden", { at: new Date().toISOString() });
+
+        void sendActivity("hidden", {
+          at: new Date().toISOString(),
+        });
       }
     };
 
-    const onBlur = () => {
+    const onBlur = (): void => {
       setViolations((v) => v + 1);
-      void sendActivity("blur", { at: new Date().toISOString() });
+
+      void sendActivity("blur", {
+        at: new Date().toISOString(),
+      });
     };
 
-    const onFullscreenChange = async () => {
+    const onFullscreenChange = (): void => {
       if (!document.fullscreenElement) {
         setViolations((v) => v + 1);
 
-        await sendActivity("fullscreen_exit", {
+        void sendActivity("fullscreen_exit", {
           at: new Date().toISOString(),
         });
 
-        try {
-          await document.documentElement.requestFullscreen();
-        } catch (err) {
-          console.warn("Tidak bisa masuk fullscreen lagi", err);
-        }
+        void document.documentElement
+          .requestFullscreen()
+          .catch((error: unknown) => {
+            console.warn("Tidak bisa masuk fullscreen lagi", error);
+          });
       }
     };
 
@@ -73,24 +90,27 @@ export function useExamGuard({
        MOBILE SECURITY
     =============================== */
 
-    // blok swipe / scroll
-    const preventTouchMove = (e: TouchEvent) => {
-      if ((e.target as HTMLElement)?.closest("[data-allow-scroll='true']")) {
+    const preventTouchMove = (event: TouchEvent): void => {
+      const target = event.target;
+
+      if (
+        target instanceof Element &&
+        target.closest("[data-allow-scroll='true']")
+      ) {
         return;
       }
-      e.preventDefault();
+
+      event.preventDefault();
     };
 
-    // blok pinch zoom
-    const preventPinch = (e: TouchEvent) => {
-      if (e.touches.length > 1) {
-        e.preventDefault();
+    const preventPinch = (event: TouchEvent): void => {
+      if (event.touches.length > 1) {
+        event.preventDefault();
       }
     };
 
-    // blok gesture navigation
-    const preventGesture = (e: Event) => {
-      e.preventDefault();
+    const preventGesture = (event: Event): void => {
+      event.preventDefault();
     };
 
     /* ===============================
@@ -99,7 +119,7 @@ export function useExamGuard({
 
     history.pushState(null, "", location.href);
 
-    const onPopState = () => {
+    const onPopState = (): void => {
       history.pushState(null, "", location.href);
 
       setViolations((v) => v + 1);
@@ -126,7 +146,6 @@ export function useExamGuard({
     });
 
     document.addEventListener("gesturestart", preventGesture);
-
     window.addEventListener("popstate", onPopState);
 
     /* ===============================
@@ -140,11 +159,11 @@ export function useExamGuard({
 
       document.removeEventListener("touchmove", preventTouchMove);
       document.removeEventListener("touchstart", preventPinch);
-      document.removeEventListener("gesturestart", preventGesture);
 
+      document.removeEventListener("gesturestart", preventGesture);
       window.removeEventListener("popstate", onPopState);
     };
-  }, [sessionToken]);
+  }, [sendActivity, sessionToken]);
 
   /* ===============================
      TRACK VIOLATION STATE
@@ -160,19 +179,18 @@ export function useExamGuard({
      FULLSCREEN + ORIENTATION LOCK
   =============================== */
 
-  const enterFullscreen = async () => {
+  const enterFullscreen = async (): Promise<void> => {
     try {
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
       }
 
-      // orientation lock (fix TypeScript)
-      const orientation = screen.orientation as any;
+      const orientation = screen.orientation;
 
-      if (orientation?.lock) {
+      if (typeof orientation.lock === "function") {
         await orientation.lock("portrait");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Gagal masuk fullscreen", error);
     }
   };
