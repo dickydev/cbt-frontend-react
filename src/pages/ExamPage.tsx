@@ -16,6 +16,14 @@ import {
   saveOfflineAnswer,
 } from "../utils/storage";
 
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
 export default function ExamPage() {
   const { token = "" } = useParams();
   const navigate = useNavigate();
@@ -43,12 +51,33 @@ export default function ExamPage() {
         `/exam/session/${token}`,
       );
       setExamData(response.data.data);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Gagal memuat sesi ujian");
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+      setError(apiError?.response?.data?.message || "Gagal memuat sesi ujian");
     } finally {
       setLoading(false);
     }
   }, [token]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!examData) return;
+
+    setSubmitting(true);
+
+    try {
+      const response = await client.post("/exam/submit", {
+        session_token: examData.session_token,
+      });
+
+      clearSessionToken();
+      navigate("/result", { state: response.data.data });
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+      setError(apiError?.response?.data?.message || "Gagal submit ujian");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [examData, navigate]);
 
   useEffect(() => {
     void fetchSession();
@@ -72,7 +101,7 @@ export default function ExamPage() {
     if (submitting) return;
 
     void handleSubmit();
-  }, [countdown.isExpired]);
+  }, [countdown.isExpired, examData, handleSubmit, submitting]);
 
   useEffect(() => {
     if (!isOnline || !examData) return;
@@ -100,7 +129,7 @@ export default function ExamPage() {
     };
 
     void syncOfflineAnswers();
-  }, [isOnline, examData?.session_token]);
+  }, [isOnline, examData?.session_token, examData, fetchSession]);
 
   const answeredMap = useMemo(() => {
     const result: Record<string, boolean> = {};
@@ -138,25 +167,6 @@ export default function ExamPage() {
     } catch (err) {
       console.error("Autosave gagal", err);
       saveOfflineAnswer(questionId, optionId, examData.session_token);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!examData) return;
-
-    setSubmitting(true);
-
-    try {
-      const response = await client.post("/exam/submit", {
-        session_token: examData.session_token,
-      });
-
-      clearSessionToken();
-      navigate("/result", { state: response.data.data });
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Gagal submit ujian");
-    } finally {
-      setSubmitting(false);
     }
   };
 
