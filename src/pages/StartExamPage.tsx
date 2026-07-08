@@ -1,22 +1,46 @@
-import { FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { isAxiosError } from "axios";
 import client from "../api/client";
 import type { ApiResponse, SessionExamResponse } from "../types/exam";
 import { getSessionToken, saveSessionToken } from "../utils/storage";
 
+type StartExamForm = {
+  student_name: string;
+  student_nis: string;
+  student_class: string;
+  exam_code: string;
+};
+
+type ApiErrorResponse = {
+  message?: string;
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (isAxiosError<ApiErrorResponse>(error)) {
+    return error.response?.data?.message ?? "Gagal memulai ujian";
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Gagal memulai ujian";
+};
+
 export default function StartExamPage() {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<StartExamForm>({
     student_name: "",
     student_nis: "",
     student_class: "",
     exam_code: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [checkingSession, setCheckingSession] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     const token = getSessionToken();
@@ -27,7 +51,7 @@ export default function StartExamPage() {
     }
 
     client
-      .get(`/exam/session/${token}`)
+      .get<ApiResponse<SessionExamResponse>>(`/exam/session/${token}`)
       .then(() => {
         navigate(`/exam/${token}`);
       })
@@ -37,7 +61,7 @@ export default function StartExamPage() {
       });
   }, [navigate]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -49,10 +73,11 @@ export default function StartExamPage() {
       );
 
       const session = response.data.data;
+
       saveSessionToken(session.session_token);
       navigate(`/exam/${session.session_token}`);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Gagal memulai ujian");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

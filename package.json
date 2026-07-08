@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:electron": "tsc -b && vite build --mode electron",
+    "dev": "node init && vite",
+    "build": "node init && tsc -b && vite build",
+    "build:electron": "node init && tsc -b && vite build --mode electron",
     "electron:dev": "concurrently -k \"vite --host 127.0.0.1 --mode electron\" \"wait-on tcp:5173 && cross-env NODE_ENV=development ELECTRON_RENDERER_URL=http://127.0.0.1:5173 electron .\"",
     "electron:preview": "npm run build:electron && cross-env NODE_ENV=production electron .",
     "electron:pack": "npm run build:electron && electron-builder --dir",
